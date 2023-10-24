@@ -1,38 +1,35 @@
-require('dotenv').config();
-
 addEventListener('fetch', event => {
     event.respondWith(handleRequest(event.request));
 });
 
 async function handleRequest(request) {
-    // ... [Previous code] ...
+    if (request.method === 'POST') {
+        const formData = await request.formData();
+        const ipfsCID = formData.get('ipfsCID');
 
-} else if (request.method === 'POST') {
-    const formData = await request.formData();
-    const ipfsCID = formData.get('ipfsCID'); // Assuming the field is named 'ipfsCID'
+        if (!ipfsCID) {
+            return new Response('Invalid input. Please provide an IPFS CID.', {
+                status: 400,
+                headers: { 'Access-Control-Allow-Origin': '*' }
+            });
+        }
 
-    if (ipfsCID) {
         try {
-            // MongoDB Data API endpoint
-            const mongoDBEndpoint = 'https://us-east-2.aws.data.mongodb-api.com/app/data-uucwm/endpoint/data/v1';
-
-            // MongoDB Data API request payload
+            const mongoDBEndpoint = MONGODB_ENDPOINT;
             const payload = {
-                collection: 'your_collection_name',
-                database: 'your_database_name',
-                dataSource: 'your_data_source_name',
+                collection: COLLECTION_NAME,
+                database: DATABASE_NAME,
+                dataSource: DATA_SOURCE_NAME,
                 document: { ipfsCID }
             };
 
-            // MongoDB Data API request
             const mongoResponse = await fetch(`${mongoDBEndpoint}/action/insertOne`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Access-Control-Request-Headers': '*',
-                    'api-key': 'your_mongodb_data_api_key'
+                    'api-key': API_KEY
                 },
-
                 body: JSON.stringify(payload)
             });
 
@@ -57,8 +54,10 @@ async function handleRequest(request) {
                 headers: { 'Access-Control-Allow-Origin': '*' }
             });
         }
+    } else if (request.method === 'OPTIONS') {
+        return handleCORS(request);
     } else {
-        return new Response('Invalid input. Please provide an IPFS CID.', {
+        return new Response('Please send a POST request.', {
             status: 400,
             headers: { 'Access-Control-Allow-Origin': '*' }
         });
@@ -67,7 +66,6 @@ async function handleRequest(request) {
 
 function handleCORS(request) {
     let headers = request.headers;
-
     if (
         headers.get("Origin") !== null &&
         headers.get("Access-Control-Request-Method") !== null &&
@@ -79,7 +77,6 @@ function handleCORS(request) {
             "Access-Control-Allow-Headers": headers.get("Access-Control-Request-Headers"),
             "Access-Control-Max-Age": "86400",
         }
-
         return new Response(null, { headers: respHeaders });
     } else {
         return new Response('CORS header check failed', { status: 400 });
