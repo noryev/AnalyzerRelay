@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 addEventListener('fetch', event => {
     event.respondWith(handleRequest(event.request));
 });
@@ -30,6 +32,7 @@ async function handleRequest(request) {
                     'Access-Control-Request-Headers': '*',
                     'api-key': 'your_mongodb_data_api_key'
                 },
+
                 body: JSON.stringify(payload)
             });
 
