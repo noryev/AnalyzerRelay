@@ -1,22 +1,25 @@
 name = "large-field-analyzer"
 type = "javascript"
 account_id = "5ad2ddf9aa06683d90aa5df60149f527"
-zone_id = "your-cloudflare-zone-id"
 compatibility_date = "2023-10-25"
 
 [build]
 upload_format = "service-worker"
 
+# Production Environment
 [env.production]
-route = "example.com/your-route*"
+route = "https://your-production-domain.com/your-route*"
 workers_dev = false
+vars = { MONGODB_ENDPOINT = "your_mongodb_endpoint", COLLECTION_NAME = "your_collection_name", DATABASE_NAME = "your_database_name", DATA_SOURCE_NAME = "your_data_source_name", API_KEY = "your_api_key" }
 
+# Staging Environment
 [env.staging]
-route = "staging.example.com/your-route*"
+route = "https://your-staging-domain.com/your-route*"
 workers_dev = false
+vars = { MONGODB_ENDPOINT = "your_mongodb_endpoint", COLLECTION_NAME = "your_collection_name", DATABASE_NAME = "your_database_name", DATA_SOURCE_NAME = "your_data_source_name", API_KEY = "your_api_key" }
 
+# Development Environment
 [env.dev]
-name = "your-worker-name-dev"
+name = "large-field-analyzer-dev"
 workers_dev = true
-
-# Add other configuration as needed
+vars = { MONGODB_ENDPOINT = "your_mongodb_endpoint", COLLECTION_NAME = "your_collection_name", DATABASE_NAME = "your_database_name", DATA_SOURCE_NAME = "your_data_source_name", API_KEY = "your_api_key" }
