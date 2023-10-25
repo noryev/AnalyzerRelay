@@ -17,19 +17,19 @@ async function handleRequest(request) {
                 });
             }
 
-            // MongoDB Atlas Data API Details
+            // Accessing the secrets
             const dataApiUrl = `https://us-east-2.aws.data.mongodb-api.com/app/data-uucwm//endpoint/data/v1/action/insertOne`;
-            const clusterName = '<your-cluster-name>';
-            const databaseName = '<your-database-name>';
-            const collectionName = '<your-collection-name>';
-            const dataApiKey = '<your-data-api-key>';
+            const clusterName = DATA_SOURCE_NAME;
+            const databaseName = DATABASE_NAME;
+            const collectionName = COLLECTION_NAME;
+            const dataApiKey = API_KEY;
 
             const documentToInsert = {
                 ipfsCID: ipfsCID,
                 // ... any other fields you want to insert ...
             };
 
-            const responseFromMongoDB = await fetch(dataApiUrl, {
+            const responseFromMongoDB = await fetch(`${dataApiUrl}/action/insertOne`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -75,7 +75,6 @@ async function handleRequest(request) {
 
 function handleCORS(request) {
     let headers = request.headers;
-
     if (
         headers.get("Origin") !== null &&
         headers.get("Access-Control-Request-Method") !== null &&
@@ -87,7 +86,6 @@ function handleCORS(request) {
             "Access-Control-Allow-Headers": headers.get("Access-Control-Request-Headers"),
             "Access-Control-Max-Age": "86400",
         }
-
         return new Response(null, { headers: respHeaders });
     } else {
         return new Response('CORS header check failed', { status: 400 });
