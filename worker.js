@@ -3,62 +3,71 @@ addEventListener('fetch', event => {
 });
 
 async function handleRequest(request) {
-    if (request.method === 'POST') {
-        const formData = await request.formData();
-        const ipfsCID = formData.get('ipfsCID');
+    try {
+        if (request.method === 'OPTIONS') {
+            return handleCORS(request);
+        } else if (request.method === 'POST') {
+            const formData = await request.formData();
+            const ipfsCID = formData.get('ipfsCID');
 
-        if (!ipfsCID) {
-            return new Response('Invalid input. Please provide an IPFS CID.', {
-                status: 400,
-                headers: { 'Access-Control-Allow-Origin': '*' }
-            });
-        }
+            if (!ipfsCID) {
+                return new Response('IPFS hash not provided.', {
+                    status: 400,
+                    headers: { 'Access-Control-Allow-Origin': '*' }
+                });
+            }
 
-        try {
-            const mongoDBEndpoint = MONGODB_ENDPOINT;
-            const payload = {
-                collection: COLLECTION_NAME,
-                database: DATABASE_NAME,
-                dataSource: DATA_SOURCE_NAME,
-                document: { ipfsCID }
+            // MongoDB Atlas Data API Details
+            const dataApiUrl = `https://us-east-2.aws.data.mongodb-api.com/app/data-uucwm//endpoint/data/v1/action/insertOne`;
+            const clusterName = '<your-cluster-name>';
+            const databaseName = '<your-database-name>';
+            const collectionName = '<your-collection-name>';
+            const dataApiKey = '<your-data-api-key>';
+
+            const documentToInsert = {
+                ipfsCID: ipfsCID,
+                // ... any other fields you want to insert ...
             };
 
-            const mongoResponse = await fetch(`${mongoDBEndpoint}/action/insertOne`, {
+            const responseFromMongoDB = await fetch(dataApiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Access-Control-Request-Headers': '*',
-                    'api-key': API_KEY
+                    'api-key': dataApiKey,
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    collection: collectionName,
+                    database: databaseName,
+                    dataSource: clusterName,
+                    document: documentToInsert,
+                }),
             });
 
-            const mongoResult = await mongoResponse.json();
-
-            if (mongoResponse.ok) {
-                return new Response(`IPFS CID stored successfully: ${JSON.stringify(mongoResult)}`, {
-                    status: 200,
-                    headers: { 'Access-Control-Allow-Origin': '*' }
-                });
-            } else {
-                console.error('MongoDB Error:', mongoResult);
-                return new Response('Failed to store the IPFS CID in MongoDB.', {
+            if (!responseFromMongoDB.ok) {
+                console.error('Failed to insert document into MongoDB Atlas');
+                return new Response('Failed to process the request.', {
                     status: 500,
                     headers: { 'Access-Control-Allow-Origin': '*' }
                 });
             }
-        } catch (error) {
-            console.error('MongoDB Error:', error);
-            return new Response('Failed to store the IPFS CID in MongoDB.', {
-                status: 500,
+
+            // If you reach this point, the document has been successfully inserted
+            return new Response('IPFS CID and other data saved successfully!', {
+                status: 200,
+                headers: { 'Access-Control-Allow-Origin': '*' }
+            });
+
+        } else {
+            return new Response('Please send a POST request.', {
+                status: 400,
                 headers: { 'Access-Control-Allow-Origin': '*' }
             });
         }
-    } else if (request.method === 'OPTIONS') {
-        return handleCORS(request);
-    } else {
-        return new Response('Please send a POST request.', {
-            status: 400,
+    } catch (error) {
+        console.error(error);
+        return new Response('Failed to process the request.', {
+            status: 500,
             headers: { 'Access-Control-Allow-Origin': '*' }
         });
     }
@@ -66,6 +75,7 @@ async function handleRequest(request) {
 
 function handleCORS(request) {
     let headers = request.headers;
+
     if (
         headers.get("Origin") !== null &&
         headers.get("Access-Control-Request-Method") !== null &&
@@ -77,6 +87,7 @@ function handleCORS(request) {
             "Access-Control-Allow-Headers": headers.get("Access-Control-Request-Headers"),
             "Access-Control-Max-Age": "86400",
         }
+
         return new Response(null, { headers: respHeaders });
     } else {
         return new Response('CORS header check failed', { status: 400 });
